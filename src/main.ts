@@ -22,6 +22,7 @@ const main = async (): Promise<void> => {
   })
 
   core.setOutput('digest', outputs.digest)
+  core.setOutput('outputs-directory', outputs.outputsDirectory)
 }
 
 main().catch((e: Error) => {

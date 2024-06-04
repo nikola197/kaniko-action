@@ -27826,6 +27826,7 @@ const main = async () => {
         target: core.getInput('target'),
     });
     core.setOutput('digest', outputs.digest);
+    core.setOutput('outputs-directory', outputs.outputsDirectory);
 };
 main().catch((e) => {
     core.setFailed(e);
