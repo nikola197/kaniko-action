@@ -27806,7 +27806,7 @@ const changeOwnership = async (path) => {
     try {
         const returnCode = await exec.exec(`sudo chown -R runner:docker ${path}`);
         if (returnCode !== 0) {
-            core.error(`Failed to change ownership of ${path}. Return code: ${returnCode}`);
+            core.info(`Failed to change ownership of ${path}. Return code: ${returnCode}`);
         }
     }
     catch (error) {
