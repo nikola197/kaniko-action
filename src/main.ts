@@ -10,6 +10,7 @@ const main = async (): Promise<void> => {
     pushRetry: core.getInput('push-retry'),
     registryMirrors: core.getMultilineInput('registry-mirror'),
     verbosity: core.getInput('verbosity'),
+    runArgs: core.getMultilineInput('run-args'),
     kanikoArgs: core.getMultilineInput('kaniko-args'),
     buildArgs: core.getMultilineInput('build-args'),
     context: core.getInput('context'),
@@ -19,6 +20,7 @@ const main = async (): Promise<void> => {
     tags: core.getMultilineInput('tags'),
     target: core.getInput('target'),
   })
+
   core.setOutput('digest', outputs.digest)
 }
 
