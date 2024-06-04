@@ -27804,14 +27804,10 @@ const generateArgs = (inputs, outputsDir) => {
 const readContent = async (p) => (await external_fs_.promises.readFile(p)).toString().trim();
 const changeOwnership = async (path) => {
     try {
-        const returnCode = await exec.exec(`sudo chown -R runner:docker ${path}`);
-        if (returnCode !== 0) {
-            core.info(`Failed to change ownership of ${path}. Return code: ${returnCode}`);
-        }
+        await exec.exec(`sudo chown -R runner:docker ${path}`);
     }
     catch (error) {
-        const errorMessage = error.message;
-        core.setFailed(errorMessage);
+        core.info(`Cannot change ownership of ${path}: ${error.message}`);
     }
 };
 const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace'];
