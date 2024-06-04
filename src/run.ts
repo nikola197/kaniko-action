@@ -20,6 +20,7 @@ type Inputs = {
   push: boolean
   tags: string[]
   target: string
+  runArgs: string[]
 }
 
 type Outputs = {
@@ -70,6 +71,7 @@ export const generateArgs = (inputs: Inputs, outputsDir: string): string[] => {
     // https://github.com/GoogleContainerTools/kaniko/issues/1542#issuecomment-1066028047
     '-e',
     'container=docker',
+    ...inputs.runArgs,
     inputs.executor,
     // kaniko args
     '--context',

@@ -52,6 +52,9 @@ inputs:
   target:
     description: Target stage to build
     required: false
+  run-args:
+    description: Extra args to docker run
+    required: false
 
 outputs:
   digest:
