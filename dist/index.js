@@ -27751,7 +27751,7 @@ const generateArgs = (inputs, outputsDir) => {
         // https://github.com/GoogleContainerTools/kaniko/issues/1542#issuecomment-1066028047
         '-e',
         'container=docker',
-        ...inputs.runArgs,
+        ...inputs.runArgs.flatMap((arg) => arg.split(' ')),
         inputs.executor,
         // kaniko args
         '--context',
