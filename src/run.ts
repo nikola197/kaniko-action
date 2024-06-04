@@ -43,7 +43,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   core.info(digest)
 
-  await Promise.all(dirs.map(changeOwnership));
+  await Promise.all(dirs.map(changeOwnership))
 
   return { digest, outputsDirectory }
 }
@@ -130,18 +130,14 @@ const readContent = async (p: string) => (await fs.readFile(p)).toString().trim(
 
 const changeOwnership = async (path: string) => {
   try {
-    const returnCode = await exec.exec(`sudo chown -R runner:docker ${path}`);
+    const returnCode = await exec.exec(`sudo chown -R runner:docker ${path}`)
     if (returnCode !== 0) {
-      core.error(`Failed to change ownership of ${path}. Return code: ${returnCode}`);
+      core.error(`Failed to change ownership of ${path}. Return code: ${returnCode}`)
     }
   } catch (error) {
-    const errorMessage = (error as Error).message;
-    core.setFailed(errorMessage);
+    const errorMessage = (error as Error).message
+    core.setFailed(errorMessage)
   }
 }
 
-const dirs = [
-  '/kaniko/action/outputs',
-  '/workspace',
-  '/github/workspace',
-]
+const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace']

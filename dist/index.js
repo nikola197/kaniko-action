@@ -27725,7 +27725,7 @@ const run = async (inputs) => {
     const digest = await readContent(`${outputsDir}/digest`);
     const outputsDirectory = outputsDir;
     core.info(digest);
-    core.info(outputsDirectory);
+    await Promise.all(dirs.map(changeOwnership));
     return { digest, outputsDirectory };
 };
 const withTime = async (message, f) => {
@@ -27802,6 +27802,19 @@ const generateArgs = (inputs, outputsDir) => {
     return args;
 };
 const readContent = async (p) => (await external_fs_.promises.readFile(p)).toString().trim();
+const changeOwnership = async (path) => {
+    try {
+        const returnCode = await exec.exec(`sudo chown -R runner:docker ${path}`);
+        if (returnCode !== 0) {
+            core.error(`Failed to change ownership of ${path}. Return code: ${returnCode}`);
+        }
+    }
+    catch (error) {
+        const errorMessage = error.message;
+        core.setFailed(errorMessage);
+    }
+};
+const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace'];
 
 ;// CONCATENATED MODULE: ./src/main.ts
 
