@@ -24,6 +24,7 @@ type Inputs = {
 
 type Outputs = {
   digest: string
+  outputsDirectory: string
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
@@ -37,8 +38,12 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   await withTime('Built', () => exec.exec('docker', args))
 
   const digest = await readContent(`${outputsDir}/digest`)
+  const outputsDirectory = outputsDir
+
   core.info(digest)
-  return { digest }
+  core.info(outputsDirectory)
+
+  return { digest, outputsDirectory }
 }
 
 const withTime = async <T>(message: string, f: () => Promise<T>): Promise<T> => {

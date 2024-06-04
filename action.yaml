@@ -56,6 +56,8 @@ inputs:
 outputs:
   digest:
     description: 'Image content-addressable identifier also called a digest'
+  outputs-directory:
+    description: 'Kaniko outputs directory'
 
 runs:
   using: 'node20'
