@@ -18,6 +18,7 @@ const defaultInputs = {
   push: false,
   tags: [],
   target: '',
+  tarPath: '',
 }
 
 test('default args', () => {
@@ -32,6 +33,10 @@ test('default args', () => {
     `/tmp/kaniko-action:/kaniko/action/outputs`,
     '-v',
     `${os.homedir()}/.docker/:/kaniko/.docker/:ro`,
+    '-v',
+    `/tmp/github/workspace:/workspace`,
+    '-v',
+    `/tmp/github/workspace:/github/workspace`,
     '-e',
     'container=docker',
     'gcr.io/kaniko-project/executor:latest',
@@ -63,6 +68,7 @@ test('full args', () => {
       push: false,
       tags: ['helloworld:latest', 'ghcr.io/int128/kaniko-action/example:v1.0.0'],
       target: 'server',
+      tarPath: '/workspace/output.tar',
     },
     '/tmp/kaniko-action',
   )
@@ -76,6 +82,10 @@ test('full args', () => {
     `/tmp/kaniko-action:/kaniko/action/outputs`,
     '-v',
     `${os.homedir()}/.docker/:/kaniko/.docker/:ro`,
+    '-v',
+    `/tmp/github/workspace:/workspace`,
+    '-v',
+    `/tmp/github/workspace:/github/workspace`,
     '-e',
     'container=docker',
     '--arg1',
@@ -118,6 +128,8 @@ test('full args', () => {
     'debug',
     '--skip-tls-verify',
     '--help',
+    '--tar-path',
+    '/workspace/output.tar',
   ])
 })
 
@@ -139,6 +151,10 @@ test('with dockerfile', () => {
     `/tmp/kaniko-action:/kaniko/action/outputs`,
     '-v',
     `${os.homedir()}/.docker/:/kaniko/.docker/:ro`,
+    '-v',
+    `/tmp/github/workspace:/workspace`,
+    '-v',
+    `/tmp/github/workspace:/github/workspace`,
     '-e',
     'container=docker',
     'gcr.io/kaniko-project/executor:latest',

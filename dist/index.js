@@ -27724,9 +27724,22 @@ const run = async (inputs) => {
     await withTime('Built', () => exec.exec('docker', args));
     const digest = await readContent(`${outputsDir}/digest`);
     const outputsDirectory = outputsDir;
+    const tarPathWithoutPrefix = inputs.tarPath
+        ? ''
+        : (() => {
+            const { found, tarPathWithoutPrefix } = checkTarPathInArgs(inputs.tarPath, args);
+            if (!found) {
+                const errorMessage = `Cannot find the tar-path ${inputs.tarPath} in the arguments.
+      Mount the tar-path directory to the container manually using run-args
+      or provide the relative tar-path.`;
+                core.setFailed(errorMessage);
+                throw new Error(errorMessage);
+            }
+            return tarPathWithoutPrefix;
+        })();
     core.info(digest);
     await Promise.all(dirs.map(changeOwnership));
-    return { digest, outputsDirectory };
+    return { digest, outputsDirectory, tarPathWithoutPrefix };
 };
 const withTime = async (message, f) => {
     const start = Date.now();
@@ -27736,6 +27749,7 @@ const withTime = async (message, f) => {
     core.info(`${message} in ${seconds}s`);
     return value;
 };
+const githubWorkspace = process.env.GITHUB_WORKSPACE || '/tmp/github/workspace';
 const generateArgs = (inputs, outputsDir) => {
     const args = [
         // docker args
@@ -27747,6 +27761,10 @@ const generateArgs = (inputs, outputsDir) => {
         `${outputsDir}:/kaniko/action/outputs`,
         '-v',
         `${external_os_.homedir()}/.docker/:/kaniko/.docker/:ro`,
+        '-v',
+        `${external_path_.resolve(githubWorkspace)}:/workspace`,
+        '-v',
+        `${external_path_.resolve(githubWorkspace)}:/github/workspace`,
         // workaround for kaniko v1.8.0+
         // https://github.com/GoogleContainerTools/kaniko/issues/1542#issuecomment-1066028047
         '-e',
@@ -27799,6 +27817,9 @@ const generateArgs = (inputs, outputsDir) => {
         args.push('--verbosity', inputs.verbosity);
     }
     args.push(...inputs.kanikoArgs);
+    if (inputs.tarPath) {
+        args.push('--tar-path', inputs.tarPath);
+    }
     return args;
 };
 const readContent = async (p) => (await external_fs_.promises.readFile(p)).toString().trim();
@@ -27809,6 +27830,20 @@ const changeOwnership = async (path) => {
     catch (error) {
         core.info(`Cannot change ownership of ${path}: ${error.message}`);
     }
+};
+const checkTarPathInArgs = (tarPath, args) => {
+    if (!external_path_.isAbsolute(tarPath)) {
+        return { found: false, tarPathWithoutPrefix: '' };
+    }
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '-v') {
+            const parts = args[i + 1].split(':');
+            if (parts.length > 1 && tarPath.startsWith(parts[1])) {
+                return { found: true, tarPathWithoutPrefix: tarPath.slice(parts[1].length) };
+            }
+        }
+    }
+    return { found: false, tarPathWithoutPrefix: '' };
 };
 const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace'];
 
@@ -27833,9 +27868,11 @@ const main = async () => {
         push: core.getBooleanInput('push'),
         tags: core.getMultilineInput('tags'),
         target: core.getInput('target'),
+        tarPath: core.getInput('tar-path'),
     });
     core.setOutput('digest', outputs.digest);
     core.setOutput('outputs-directory', outputs.outputsDirectory);
+    core.setOutput('tar-path-without-prefix', outputs.tarPathWithoutPrefix);
 };
 main().catch((e) => {
     core.setFailed(e);

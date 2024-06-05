@@ -21,11 +21,13 @@ type Inputs = {
   tags: string[]
   target: string
   runArgs: string[]
+  tarPath: string
 }
 
 type Outputs = {
   digest: string
   outputsDirectory: string
+  tarPathWithoutPrefix: string
 }
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
@@ -41,11 +43,25 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const digest = await readContent(`${outputsDir}/digest`)
   const outputsDirectory = outputsDir
 
+  const tarPathWithoutPrefix = inputs.tarPath
+    ? ''
+    : (() => {
+        const { found, tarPathWithoutPrefix } = checkTarPathInArgs(inputs.tarPath, args)
+        if (!found) {
+          const errorMessage = `Cannot find the tar-path ${inputs.tarPath} in the arguments.
+      Mount the tar-path directory to the container manually using run-args
+      or provide the relative tar-path.`
+          core.setFailed(errorMessage)
+          throw new Error(errorMessage)
+        }
+        return tarPathWithoutPrefix
+      })()
+
   core.info(digest)
 
   await Promise.all(dirs.map(changeOwnership))
 
-  return { digest, outputsDirectory }
+  return { digest, outputsDirectory, tarPathWithoutPrefix }
 }
 
 const withTime = async <T>(message: string, f: () => Promise<T>): Promise<T> => {
@@ -56,6 +72,8 @@ const withTime = async <T>(message: string, f: () => Promise<T>): Promise<T> => 
   core.info(`${message} in ${seconds}s`)
   return value
 }
+
+const githubWorkspace = process.env.GITHUB_WORKSPACE || '/tmp/github/workspace'
 
 export const generateArgs = (inputs: Inputs, outputsDir: string): string[] => {
   const args = [
@@ -68,6 +86,10 @@ export const generateArgs = (inputs: Inputs, outputsDir: string): string[] => {
     `${outputsDir}:/kaniko/action/outputs`,
     '-v',
     `${os.homedir()}/.docker/:/kaniko/.docker/:ro`,
+    '-v',
+    `${path.resolve(githubWorkspace)}:/workspace`,
+    '-v',
+    `${path.resolve(githubWorkspace)}:/github/workspace`,
     // workaround for kaniko v1.8.0+
     // https://github.com/GoogleContainerTools/kaniko/issues/1542#issuecomment-1066028047
     '-e',
@@ -123,6 +145,11 @@ export const generateArgs = (inputs: Inputs, outputsDir: string): string[] => {
   }
 
   args.push(...inputs.kanikoArgs)
+
+  if (inputs.tarPath) {
+    args.push('--tar-path', inputs.tarPath)
+  }
+
   return args
 }
 
@@ -134,6 +161,21 @@ const changeOwnership = async (path: string) => {
   } catch (error) {
     core.info(`Cannot change ownership of ${path}: ${(error as Error).message}`)
   }
+}
+
+const checkTarPathInArgs = (tarPath: string, args: string[]): { found: boolean; tarPathWithoutPrefix: string } => {
+  if (!path.isAbsolute(tarPath)) {
+    return { found: false, tarPathWithoutPrefix: '' }
+  }
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '-v') {
+      const parts = args[i + 1].split(':')
+      if (parts.length > 1 && tarPath.startsWith(parts[1])) {
+        return { found: true, tarPathWithoutPrefix: tarPath.slice(parts[1].length) }
+      }
+    }
+  }
+  return { found: false, tarPathWithoutPrefix: '' }
 }
 
 const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace']

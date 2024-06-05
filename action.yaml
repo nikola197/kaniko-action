@@ -55,12 +55,17 @@ inputs:
   run-args:
     description: Extra args to docker run
     required: false
+  tar-path:
+    description: Path to the tarball
+    required: false
 
 outputs:
   digest:
     description: 'Image content-addressable identifier also called a digest'
   outputs-directory:
     description: 'Kaniko outputs directory'
+  tar-path-without-prefix:
+    description: 'Path to the tarball without the prefix'
 
 runs:
   using: 'node20'

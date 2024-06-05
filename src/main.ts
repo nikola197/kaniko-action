@@ -19,10 +19,12 @@ const main = async (): Promise<void> => {
     push: core.getBooleanInput('push'),
     tags: core.getMultilineInput('tags'),
     target: core.getInput('target'),
+    tarPath: core.getInput('tar-path'),
   })
 
   core.setOutput('digest', outputs.digest)
   core.setOutput('outputs-directory', outputs.outputsDirectory)
+  core.setOutput('tar-path-without-prefix', outputs.tarPathWithoutPrefix)
 }
 
 main().catch((e: Error) => {
