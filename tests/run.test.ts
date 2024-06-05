@@ -126,10 +126,10 @@ test('full args', () => {
     'mirror.gcr.io',
     '--verbosity',
     'debug',
-    '--skip-tls-verify',
-    '--help',
     '--tar-path',
     '/workspace/output.tar',
+    '--skip-tls-verify',
+    '--help',
   ])
 })
 

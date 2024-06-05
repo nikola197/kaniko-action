@@ -144,12 +144,11 @@ export const generateArgs = (inputs: Inputs, outputsDir: string): string[] => {
   if (inputs.verbosity) {
     args.push('--verbosity', inputs.verbosity)
   }
-
-  args.push(...inputs.kanikoArgs)
-
   if (inputs.tarPath) {
     args.push('--tar-path', inputs.tarPath)
   }
+
+  args.push(...inputs.kanikoArgs)
 
   return args
 }

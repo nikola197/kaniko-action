@@ -27738,6 +27738,8 @@ const run = async (inputs) => {
             return tarPathWithoutPrefix;
         })();
     core.info(digest);
+    core.info(outputsDirectory);
+    core.info(tarPathWithoutPrefix);
     await Promise.all(dirs.map(changeOwnership));
     return { digest, outputsDirectory, tarPathWithoutPrefix };
 };
@@ -27816,10 +27818,10 @@ const generateArgs = (inputs, outputsDir) => {
     if (inputs.verbosity) {
         args.push('--verbosity', inputs.verbosity);
     }
-    args.push(...inputs.kanikoArgs);
     if (inputs.tarPath) {
         args.push('--tar-path', inputs.tarPath);
     }
+    args.push(...inputs.kanikoArgs);
     return args;
 };
 const readContent = async (p) => (await external_fs_.promises.readFile(p)).toString().trim();
