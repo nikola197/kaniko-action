@@ -1,5 +1,5 @@
 import * as os from 'os'
-import { generateArgs } from '../src/run.js'
+import { checkTarPathInArgs, generateArgs } from '../src/run.js'
 
 const defaultInputs = {
   executor: 'gcr.io/kaniko-project/executor:latest',
@@ -167,4 +167,22 @@ test('with dockerfile', () => {
     'my.Dockerfile',
     '--no-push',
   ])
+})
+
+test('output tar-path-without-prefix', () => {
+  let tarPathWithoutPrefix = ''
+  const inputs = {
+    ...defaultInputs,
+    tarPath: '/workspace/output.tar',
+  }
+
+  const args = generateArgs(inputs, '/tmp/kaniko-action')
+
+  if (inputs.tarPath) {
+    const { found, tarPathWithoutPrefix: tpwp } = checkTarPathInArgs(inputs.tarPath, args)
+    if (found) {
+      tarPathWithoutPrefix = tpwp
+    }
+  }
+  expect(tarPathWithoutPrefix).toBe('output.tar')
 })

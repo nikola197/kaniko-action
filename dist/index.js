@@ -27724,19 +27724,18 @@ const run = async (inputs) => {
     await withTime('Built', () => exec.exec('docker', args));
     const digest = await readContent(`${outputsDir}/digest`);
     const outputsDirectory = outputsDir;
-    const tarPathWithoutPrefix = inputs.tarPath
-        ? ''
-        : (() => {
-            const { found, tarPathWithoutPrefix } = checkTarPathInArgs(inputs.tarPath, args);
-            if (!found) {
-                const errorMessage = `Cannot find the tar-path ${inputs.tarPath} in the arguments.
-      Mount the tar-path directory to the container manually using run-args
-      or provide the relative tar-path.`;
-                core.setFailed(errorMessage);
-                throw new Error(errorMessage);
-            }
-            return tarPathWithoutPrefix;
-        })();
+    let tarPathWithoutPrefix = '';
+    if (inputs.tarPath) {
+        const { found, tarPathWithoutPrefix: prefix } = checkTarPathInArgs(inputs.tarPath, args);
+        if (!found) {
+            const errorMessage = `Cannot find the tar-path ${inputs.tarPath} in the arguments.
+    Mount the tar-path directory to the container manually using run-args
+    or provide the relative tar-path.`;
+            core.setFailed(errorMessage);
+            throw new Error(errorMessage);
+        }
+        tarPathWithoutPrefix = prefix;
+    }
     core.info(digest);
     core.info(outputsDirectory);
     core.info(tarPathWithoutPrefix);
@@ -27834,18 +27833,18 @@ const changeOwnership = async (path) => {
     }
 };
 const checkTarPathInArgs = (tarPath, args) => {
-    if (!external_path_.isAbsolute(tarPath)) {
-        return { found: false, tarPathWithoutPrefix: '' };
-    }
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] === '-v') {
-            const parts = args[i + 1].split(':');
-            if (parts.length > 1 && tarPath.startsWith(parts[1])) {
-                return { found: true, tarPathWithoutPrefix: tarPath.slice(parts[1].length) };
+    let ret = { found: false, tarPathWithoutPrefix: '' };
+    if (external_path_.isAbsolute(tarPath)) {
+        for (let i = 0; i < args.length; i++) {
+            if (args[i] == '-v') {
+                const parts = args[i + 1].split(':');
+                if (parts.length > 1 && parts.length < 3 && tarPath.startsWith(parts[1])) {
+                    ret = { found: true, tarPathWithoutPrefix: tarPath.slice(parts[1].length + 1) };
+                }
             }
         }
     }
-    return { found: false, tarPathWithoutPrefix: '' };
+    return ret;
 };
 const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace'];
 

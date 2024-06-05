@@ -43,19 +43,19 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const digest = await readContent(`${outputsDir}/digest`)
   const outputsDirectory = outputsDir
 
-  const tarPathWithoutPrefix = inputs.tarPath
-    ? ''
-    : (() => {
-        const { found, tarPathWithoutPrefix } = checkTarPathInArgs(inputs.tarPath, args)
-        if (!found) {
-          const errorMessage = `Cannot find the tar-path ${inputs.tarPath} in the arguments.
-      Mount the tar-path directory to the container manually using run-args
-      or provide the relative tar-path.`
-          core.setFailed(errorMessage)
-          throw new Error(errorMessage)
-        }
-        return tarPathWithoutPrefix
-      })()
+  let tarPathWithoutPrefix = ''
+
+  if (inputs.tarPath) {
+    const { found, tarPathWithoutPrefix: tpwp } = checkTarPathInArgs(inputs.tarPath, args)
+    if (!found) {
+      const errorMessage = `Cannot find the tar-path ${inputs.tarPath} in the arguments.
+    Mount the tar-path directory to the container manually using run-args
+    or provide the relative tar-path.`
+      core.setFailed(errorMessage)
+      throw new Error(errorMessage)
+    }
+    tarPathWithoutPrefix = tpwp
+  }
 
   core.info(digest)
   core.info(outputsDirectory)
@@ -163,19 +163,22 @@ const changeOwnership = async (path: string) => {
   }
 }
 
-const checkTarPathInArgs = (tarPath: string, args: string[]): { found: boolean; tarPathWithoutPrefix: string } => {
-  if (!path.isAbsolute(tarPath)) {
-    return { found: false, tarPathWithoutPrefix: '' }
-  }
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '-v') {
-      const parts = args[i + 1].split(':')
-      if (parts.length > 1 && tarPath.startsWith(parts[1])) {
-        return { found: true, tarPathWithoutPrefix: tarPath.slice(parts[1].length) }
+export const checkTarPathInArgs = (
+  tarPath: string,
+  args: string[],
+): { found: boolean; tarPathWithoutPrefix: string } => {
+  let ret = { found: false, tarPathWithoutPrefix: '' }
+  if (path.isAbsolute(tarPath)) {
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] == '-v') {
+        const parts = args[i + 1].split(':')
+        if (parts.length > 1 && parts.length < 3 && tarPath.startsWith(parts[1])) {
+          ret = { found: true, tarPathWithoutPrefix: tarPath.slice(parts[1].length + 1) }
+        }
       }
     }
   }
-  return { found: false, tarPathWithoutPrefix: '' }
+  return ret
 }
 
 const dirs = ['/kaniko/action/outputs', '/workspace', '/github/workspace']
