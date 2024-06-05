@@ -58,7 +58,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
       })()
 
   core.info(digest)
-
+  core.info(outputsDirectory)
+  core.info(tarPathWithoutPrefix)
   await Promise.all(dirs.map(changeOwnership))
 
   return { digest, outputsDirectory, tarPathWithoutPrefix }
